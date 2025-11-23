@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import api from "./services/api.js";
 import { Line } from "react-chartjs-2";
-import tempIcon from './assets/icons/temperature.png';
-import humidityIcon from './assets/icons/humidity.png';
-import co2Icon from './assets/icons/co2.png';
-import gasIcon from './assets/icons/gas.png';
-import lightIcon from './assets/icons/light.png';
+import tempIcon from "../assets/icons/thermometer.png";
+import humidityIcon from "../assets/icons/humidity.png";
+import co2Icon from "../assets/icons/co2.png";
+import gasIcon from "../assets/icons/gas.png";
+import lightIcon from "../assets/icons/light.png";
 import {
   Chart as ChartJS,
   CategoryScale,
