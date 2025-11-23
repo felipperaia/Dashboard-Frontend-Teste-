@@ -1,6 +1,6 @@
 // services/api.js - Endpoints centralizados
 // Atualizar em produção: inserir URL da API no Netlify/Render em VITE_API_URL
-const API_URL = (import.meta && import.meta.env && import.meta.env.VITE_API_URL) ? import.meta.env.VITE_API_URL : "https://dashboard-iot-silos-backend-1.onrender.com/api"; // // Atualizar Render: inserir URL final da API aqui
+const API_URL = (import.meta && import.meta.env && import.meta.env.VITE_API_URL) ? import.meta.env.VITE_API_URL : "https://dashboard-backend-teste.onrender.com/api"; // // Atualizar Render: inserir URL final da API aqui
 
 // Função para verificar se o token JWT está expirado
 const isTokenExpired = (token) => {
@@ -119,3 +119,4 @@ api.put = (path, body) => request(path, { method: "PUT", body: JSON.stringify(bo
 api.post = (path, body) => request(path, { method: "POST", body: JSON.stringify(body) });
 
 export default api;
+
