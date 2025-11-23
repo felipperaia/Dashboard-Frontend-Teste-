@@ -59,83 +59,95 @@ export default function Settings() {
   if (!profile) return <Panel>Carregando...</Panel>;
 
   return (
-    <Panel>
-      <Title>Configurações do Usuário</Title>
-
-      <Form>
-        <Label>
-          Nome
-          <Input
-            name="name"
-            value={profile.name || profile.username || ""}
-            onChange={handleChange}
-          />
-        </Label>
-
-        <Label>
-          Email
-          <Input
-            name="email"
-            value={profile.email || ""}
-            onChange={handleChange}
-          />
-        </Label>
-
-        <Label>
-          Telefone
-          <Input
-            name="phone"
-            value={profile.phone || ""}
-            onChange={handleChange}
-          />
-        </Label>
-
-        <ButtonsRow>
-          <PrimaryButton onClick={save} disabled={saving}>
-            {saving ? "Salvando..." : "Salvar"}
-          </PrimaryButton>
-
-          <SecondaryButton onClick={() => navigate("/mfa") } $mfa>
-            Configurar MFA
-          </SecondaryButton>
-        </ButtonsRow>
-      </Form>
-
-          {profile.role === 'admin' && (
-        <div style={{marginTop:24}}>
-          <h3>Gerenciar Usuários</h3>
-          <div style={{display:'grid', gap:8}}>
-            <input placeholder="Nome de usuário" value={newUser.username} onChange={e=>setNewUser({...newUser, username:e.target.value})} />
-            <input placeholder="Email" value={newUser.email} onChange={e=>setNewUser({...newUser, email:e.target.value})} />
-            <input placeholder="Senha" type="password" value={newUser.password} onChange={e=>setNewUser({...newUser, password:e.target.value})} />
-            <select value={newUser.role} onChange={e=>setNewUser({...newUser, role:e.target.value})}>
-              <option value="operator">Operator</option>
-              <option value="admin">Admin</option>
-            </select>
-            <PrimaryButton onClick={createUser}>Criar Usuário</PrimaryButton>
-          </div>
-
-          <div style={{marginTop:16}}>
-            <h4>Usuários existentes</h4>
+    <SettingsContainer>
+      <Grid>
+        <Card>
+          <CardHeader>
+            <Title>Configurações do Usuário</Title>
             <div>
-              {users.map(u => (
-                <div key={u.id} style={{display:'flex', justifyContent:'space-between', padding:8, borderBottom:'1px solid #eee'}}>
-                  <div>
-                    <div style={{fontWeight:600}}>{u.username}</div>
-                    <div style={{fontSize:12,color:'#666'}}>{u.email} — {u.role}</div>
-                  </div>
-                </div>
-              ))}
+              <PrimaryButton onClick={save} disabled={saving}>{saving ? 'Salvando...' : 'Salvar'}</PrimaryButton>
             </div>
-          </div>
-        </div>
-      )}
+          </CardHeader>
 
-      {/* Notifications embedded inside Settings (access via Settings only) */}
-      <div style={{marginTop: 24}}>
-        <Notifications />
-      </div>
-    </Panel>
+          <CardBody>
+            <Section>
+              <Label>Nome
+                <Input name="name" value={profile.name || profile.username || ""} onChange={handleChange} />
+              </Label>
+            </Section>
+
+            <Section>
+              <Label>Email
+                <Input name="email" value={profile.email || ""} onChange={handleChange} />
+              </Label>
+            </Section>
+
+            <Section>
+              <Label>Telefone
+                <Input name="phone" value={profile.phone || ""} onChange={handleChange} />
+              </Label>
+            </Section>
+
+            <SectionRow>
+              <SecondaryButton onClick={() => navigate('/mfa')}>Configurar MFA</SecondaryButton>
+            </SectionRow>
+          </CardBody>
+        </Card>
+
+        {profile.role === 'admin' && (
+          <Card>
+            <CardHeader>
+              <h3 style={{margin:0}}>Gerenciar Usuários</h3>
+            </CardHeader>
+            <CardBody>
+              <Section>
+                <input placeholder="Nome de usuário" value={newUser.username} onChange={e=>setNewUser({...newUser, username:e.target.value})} />
+              </Section>
+              <Section>
+                <input placeholder="Email" value={newUser.email} onChange={e=>setNewUser({...newUser, email:e.target.value})} />
+              </Section>
+              <Section>
+                <input placeholder="Senha" type="password" value={newUser.password} onChange={e=>setNewUser({...newUser, password:e.target.value})} />
+              </Section>
+              <Section>
+                <select value={newUser.role} onChange={e=>setNewUser({...newUser, role:e.target.value})}>
+                  <option value="operator">Operator</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </Section>
+              <Section>
+                <PrimaryButton onClick={createUser}>Criar Usuário</PrimaryButton>
+              </Section>
+
+              <Section style={{marginTop:12}}>
+                <h4>Usuários existentes</h4>
+                <div>
+                  {users.map(u => (
+                    <UserRow key={u.id}>
+                      <div>
+                        <div style={{fontWeight:600}}>{u.username}</div>
+                        <div style={{fontSize:12,color:'#666'}}>{u.email} — {u.role}</div>
+                      </div>
+                    </UserRow>
+                  ))}
+                </div>
+              </Section>
+            </CardBody>
+          </Card>
+        )}
+
+        <Card>
+          <CardHeader>
+            <h3 style={{margin:0}}>Notificações</h3>
+          </CardHeader>
+          <CardBody>
+            <Section>
+              <Notifications />
+            </Section>
+          </CardBody>
+        </Card>
+      </Grid>
+    </SettingsContainer>
   );
 }
 
@@ -156,6 +168,54 @@ const Panel = styled.div`
     transform: translateY(-4px);
     box-shadow: 0 10px 30px rgba(2,6,23,0.12);
   }
+`;
+
+const SettingsContainer = styled.div`
+  padding: 24px;
+  max-width: 1100px;
+  margin: 12px auto;
+`;
+
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+`;
+
+const Card = styled.div`
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+  border: 1px solid #e6eef6;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 14px 32px rgba(2,6,23,0.10);
+  }
+`;
+
+const CardHeader = styled.div`
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;
+`;
+
+const CardBody = styled.div`
+  display:flex; flex-direction:column; gap:10px;
+`;
+
+const Section = styled.div`
+  padding:8px; border-radius:8px;
+  transition: transform 0.12s ease, background 0.12s ease;
+  &:hover { transform: translateY(-4px); background: #fbfdff; }
+`;
+
+const SectionRow = styled.div`
+  display:flex; gap:8px; align-items:center;
+`;
+
+const UserRow = styled.div`
+  padding:8px; border-radius:8px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; gap:12px;
 `;
 
 const Title = styled.h2`

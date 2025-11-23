@@ -138,6 +138,29 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
     }
   };
 
+  const fetchReports = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/reports?limit=50`, { headers: getHeaders() });
+      if (!res.ok) throw new Error('Erro ao buscar relatórios');
+      const data = await res.json();
+      setReports(data || []);
+    } catch (e) {
+      console.warn('fetchReports erro', e);
+    }
+  };
+
+  const fetchForecastsForSilo = async (siloId) => {
+    try {
+      if (!siloId) return;
+      const res = await fetch(`${API_BASE}/api/ml/forecast?siloId=${siloId}&period_days=7`, { headers: getHeaders() });
+      if (!res.ok) throw new Error('Erro ao buscar previsões');
+      const data = await res.json();
+      setForecasts(data || []);
+    } catch (e) {
+      console.warn('fetchForecastsForSilo erro', e);
+    }
+  };
+
   const acknowledgeAlert = async (alertId) => {
     try {
       const res = await fetch(`${API_BASE}/api/alerts/ack/${alertId}`, {
@@ -193,22 +216,37 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
     fetchSilos();
     fetchAlerts();
     fetchUsers();
+    fetchReports();
+
+    // poll reports and meteorology periodically
+    const repInterval = setInterval(() => fetchReports(), 60 * 1000);
+    return () => clearInterval(repInterval);
   }, []);
 
   // Auto-load meteorology when entering the Report tab or when silo changes
   useEffect(() => {
-    if (activeTab === 'report' && selectedSilo) {
-      (async () => {
-        try {
-          const res = await fetch(`${API_BASE}/api/weather/latest?silo_id=${selectedSilo}`, { headers: getHeaders() });
-          if (res.ok) {
-            const data = await res.json();
-            setMeteorology(data || []);
-          }
-        } catch (e) {
-          console.warn('Erro ao carregar meteorologia automaticamente', e);
+    // Always auto-load meteorology when in Report tab; if selectedSilo use silo-specific, otherwise load recent docs
+    let mounted = true;
+    const doLoad = async () => {
+      try {
+        const url = selectedSilo ? `${API_BASE}/api/weather/latest?silo_id=${selectedSilo}` : `${API_BASE}/api/weather/latest?limit=10`;
+        const res = await fetch(url, { headers: getHeaders() });
+        if (res.ok && mounted) {
+          const data = await res.json();
+          setMeteorology(data || []);
         }
-      })();
+      } catch (e) {
+        console.warn('Erro ao carregar meteorologia automaticamente', e);
+      }
+    };
+
+    if (activeTab === 'report') {
+      doLoad();
+      // poll meteorology every 2 minutes while on report tab
+      const iv = setInterval(doLoad, 2 * 60 * 1000);
+      // also refresh forecasts
+      fetchForecastsForSilo(selectedSilo);
+      return () => { mounted = false; clearInterval(iv); };
     }
   }, [activeTab, selectedSilo]);
 
@@ -472,10 +510,6 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
             <div style={s.card}>
                   <div style={s.cardHeader}>
                     <h3 style={s.cardTitle}>Relatórios Gerados</h3>
-                    <div>
-                      <button style={s.buttonSmall} onClick={async ()=>{ try{ const res = await fetch(`${API_BASE}/api/reports?limit=50`, { headers: getHeaders() }); if(!res.ok) throw new Error('Erro'); const data = await res.json(); setReports(data); }catch(e){alert('Erro ao buscar relatórios')}}}>Carregar</button>
-                      <button style={{...s.buttonSmall, marginLeft:8}} onClick={async ()=>{ try{ const res = await fetch(`${API_BASE}/api/ml/forecast?limit=100`, { headers: getHeaders() }); if(!res.ok) throw new Error('Erro'); const data = await res.json(); setForecasts(data); }catch(e){alert('Erro ao buscar previsões')}}}>Carregar Previsões</button>
-                    </div>
                   </div>
                   <div>
                     {reports.length === 0 ? <p>Nenhum relatório carregado.</p> : (
@@ -485,6 +519,13 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
                             <div>
                               <div style={{fontWeight:700}}>{r.title}</div>
                               <div style={{fontSize:12, color:'#64748b'}}>Silo: {r.silo_name} | Período: {new Date(r.start).toLocaleDateString()} - {new Date(r.end).toLocaleDateString()}</div>
+                              {r.spark_metrics && Object.keys(r.spark_metrics).length > 0 && (
+                                <div style={{marginTop:6, fontSize:12}}>
+                                  {Object.entries(r.spark_metrics).map(([t,g]) => (
+                                    <div key={t} style={{color:'#374151'}}>{t}: cnt {g.count} • avg {g.avg ? Number(g.avg).toFixed(2) : 'n/a'}</div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                             <div style={{display:'flex', gap:8}}>
                               <a href={`${API_BASE}/api/reports/${r._id}/pdf`} target="_blank" rel="noreferrer" style={{textDecoration:'none'}}><button style={s.buttonSmall}>Baixar PDF</button></a>
@@ -505,43 +546,26 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
                   </select>
                 </div>
               </div>
-              <div style={s.form}>
-                <input type="date" style={s.input} value={reportStart} onChange={(e)=>setReportStart(e.target.value)} />
-                <input type="date" style={s.input} value={reportEnd} onChange={(e)=>setReportEnd(e.target.value)} />
-                <input style={s.input} placeholder="Título (opcional)" value={reportTitle} onChange={(e)=>setReportTitle(e.target.value)} />
-                <textarea style={{...s.input, minHeight:80}} placeholder="Notas" value={reportNotes} onChange={(e)=>setReportNotes(e.target.value)} />
-                <div style={{display:'flex', gap:8}}>
-                  <button style={s.button} onClick={async ()=>{
-                    if(!selectedSilo){ alert('Selecione um silo'); return; }
-                    try{
-                      const body = { silo_id: selectedSilo, start: new Date(reportStart).toISOString(), end: new Date(reportEnd).toISOString(), title: reportTitle, notes: reportNotes };
-                      const res = await fetch(`${API_BASE}/api/reports/`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(body) });
-                      if(!res.ok) throw new Error('Erro ao gerar relatório');
-                      const created = await res.json();
-                      // abrir PDF
-                      window.open(`${API_BASE}/api/reports/${created._id}/pdf`, '_blank');
-                    }catch(e){ alert('Erro ao gerar relatório: ' + e.message) }
-                  }}>Gerar Relatório (PDF)</button>
-                  <button style={s.buttonSmall} onClick={async ()=>{
-                    if(!selectedSilo){ alert('Selecione um silo'); return; }
-                    try{
-                      const res = await fetch(`${API_BASE}/api/weather/latest?silo_id=${selectedSilo}`, { headers: getHeaders() });
-                      if(!res.ok) throw new Error('Erro ao buscar meteorologia');
-                      const data = await res.json();
-                      setMeteorology(data || []);
-                    }catch(e){ alert('Erro: ' + e.message) }
-                  }}>Mostrar Meteorologia</button>
-                  <button style={{...s.buttonSmall, marginLeft:8}} onClick={async ()=>{
-                    if(!selectedSilo){ alert('Selecione um silo'); return; }
-                    try{
-                      const res = await fetch(`${API_BASE}/api/ml/forecast?siloId=${selectedSilo}&period_days=7`, { headers: getHeaders() });
-                      if(!res.ok) throw new Error('Erro ao buscar previsões');
-                      const data = await res.json();
-                      setForecasts(data || []);
-                    }catch(e){ alert('Erro: ' + e.message) }
-                  }}>Mostrar Previsões (7d)</button>
+                <div style={s.form}>
+                  <input type="date" style={s.input} value={reportStart} onChange={(e)=>setReportStart(e.target.value)} />
+                  <input type="date" style={s.input} value={reportEnd} onChange={(e)=>setReportEnd(e.target.value)} />
+                  <input style={s.input} placeholder="Título (opcional)" value={reportTitle} onChange={(e)=>setReportTitle(e.target.value)} />
+                  <textarea style={{...s.input, minHeight:80}} placeholder="Notas" value={reportNotes} onChange={(e)=>setReportNotes(e.target.value)} />
+                  <div style={{display:'flex', gap:8}}>
+                    <button style={s.button} onClick={async ()=>{
+                      if(!selectedSilo){ alert('Selecione um silo'); return; }
+                      try{
+                        const body = { silo_id: selectedSilo, start: new Date(reportStart).toISOString(), end: new Date(reportEnd).toISOString(), title: reportTitle, notes: reportNotes };
+                        const res = await fetch(`${API_BASE}/api/reports/`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(body) });
+                        if(!res.ok) throw new Error('Erro ao gerar relatório');
+                        const created = await res.json();
+                        // abrir PDF
+                        window.open(`${API_BASE}/api/reports/${created._id}/pdf`, '_blank');
+                      }catch(e){ alert('Erro ao gerar relatório: ' + e.message) }
+                    }}>Gerar Relatório (PDF)</button>
+                    <div style={{flex:1}} />
+                  </div>
                 </div>
-              </div>
               {meteorology.length > 0 && (
                 <div style={{marginTop:12}}>
                   <h4>Previsão Meteorológica (7 dias)</h4>
