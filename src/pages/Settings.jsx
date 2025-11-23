@@ -62,7 +62,7 @@ export default function Settings() {
   return (
     <SettingsContainer>
       <HeaderRow>
-        <Title>Configurações</Title>
+        <Title>Configurações </Title>
         <Tabs>
           <TabButton $active={activeTab === 'perfil'} onClick={() => setActiveTab('perfil')}>Perfil</TabButton>
           {profile.role === 'admin' && <TabButton $active={activeTab === 'usuarios'} onClick={() => setActiveTab('usuarios')}>Usuários</TabButton>}
@@ -294,7 +294,7 @@ const TabButton = styled.button`
   padding:10px 16px; border:none; border-radius:8px 8px 0 0; cursor:pointer; font-size:14px; font-weight:500;
   transition: all 0.16s ease;
   background: ${({$active}) => $active ? 'linear-gradient(135deg,#258f3f,#269c4a)' : 'transparent'};
-  color: ${({$active}) => $active ? '#fff' : '#64748b'};
+  color: ${({$active}) => $active ? '#fff' : '#fff'};
   box-shadow: ${({$active}) => $active ? '0 2px 8px rgba(59,130,246,0.18)' : 'none'};
   &:hover { transform: translateY(-2px); color: #0f172a; background: ${({$active}) => $active ? 'linear-gradient(135deg,#1e7b36,#1f8b3f)' : '#f9fafb'} }
 `;
