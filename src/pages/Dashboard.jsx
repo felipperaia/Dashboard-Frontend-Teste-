@@ -19,6 +19,12 @@ export default function Dashboard() {
   const [alerts, setAlerts] = useState([]);
   const [users, setUsers] = useState([]);
   const [reports, setReports] = useState([]);
+  const [reportStart, setReportStart] = useState("");
+  const [reportEnd, setReportEnd] = useState("");
+  const [reportTitle, setReportTitle] = useState("");
+  const [reportNotes, setReportNotes] = useState("");
+  const [meteorology, setMeteorology] = useState([]);
+  const [forecasts, setForecasts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedSilo, setSelectedSilo] = useState(null);
@@ -449,7 +455,10 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
             <div style={s.card}>
                   <div style={s.cardHeader}>
                     <h3 style={s.cardTitle}>Relatórios Gerados</h3>
-                    <button style={s.buttonSmall} onClick={async ()=>{ try{ const res = await fetch(`${API_BASE}/api/reports?limit=50`, { headers: getHeaders() }); if(!res.ok) throw new Error('Erro'); const data = await res.json(); setReports(data); }catch(e){alert('Erro ao buscar relatórios')}}}>Carregar</button>
+                    <div>
+                      <button style={s.buttonSmall} onClick={async ()=>{ try{ const res = await fetch(`${API_BASE}/api/reports?limit=50`, { headers: getHeaders() }); if(!res.ok) throw new Error('Erro'); const data = await res.json(); setReports(data); }catch(e){alert('Erro ao buscar relatórios')}}}>Carregar</button>
+                      <button style={{...s.buttonSmall, marginLeft:8}} onClick={async ()=>{ try{ const res = await fetch(`${API_BASE}/api/ml/forecast?limit=100`, { headers: getHeaders() }); if(!res.ok) throw new Error('Erro'); const data = await res.json(); setForecasts(data); }catch(e){alert('Erro ao buscar previsões')}}}>Carregar Previsões</button>
+                    </div>
                   </div>
                   <div>
                     {reports.length === 0 ? <p>Nenhum relatório carregado.</p> : (
@@ -468,6 +477,78 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
                       </div>
                     )}
                   </div>
+            </div>
+            <div style={s.card}>
+              <div style={s.cardHeader}>
+                <h3 style={s.cardTitle}>Gerar Novo Relatório</h3>
+                <div>
+                  <select style={s.select} value={selectedSilo || ""} onChange={(e) => setSelectedSilo(e.target.value)}>
+                    <option value="">Selecione o Silo</option>
+                    {silos.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={s.form}>
+                <input type="date" style={s.input} value={reportStart} onChange={(e)=>setReportStart(e.target.value)} />
+                <input type="date" style={s.input} value={reportEnd} onChange={(e)=>setReportEnd(e.target.value)} />
+                <input style={s.input} placeholder="Título (opcional)" value={reportTitle} onChange={(e)=>setReportTitle(e.target.value)} />
+                <textarea style={{...s.input, minHeight:80}} placeholder="Notas" value={reportNotes} onChange={(e)=>setReportNotes(e.target.value)} />
+                <div style={{display:'flex', gap:8}}>
+                  <button style={s.button} onClick={async ()=>{
+                    if(!selectedSilo){ alert('Selecione um silo'); return; }
+                    try{
+                      const body = { silo_id: selectedSilo, start: new Date(reportStart).toISOString(), end: new Date(reportEnd).toISOString(), title: reportTitle, notes: reportNotes };
+                      const res = await fetch(`${API_BASE}/api/reports/`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(body) });
+                      if(!res.ok) throw new Error('Erro ao gerar relatório');
+                      const created = await res.json();
+                      // abrir PDF
+                      window.open(`${API_BASE}/api/reports/${created._id}/pdf`, '_blank');
+                    }catch(e){ alert('Erro ao gerar relatório: ' + e.message) }
+                  }}>Gerar Relatório (PDF)</button>
+                  <button style={s.buttonSmall} onClick={async ()=>{
+                    if(!selectedSilo){ alert('Selecione um silo'); return; }
+                    try{
+                      const res = await fetch(`${API_BASE}/api/weather/latest?silo_id=${selectedSilo}`, { headers: getHeaders() });
+                      if(!res.ok) throw new Error('Erro ao buscar meteorologia');
+                      const data = await res.json();
+                      setMeteorology(data || []);
+                    }catch(e){ alert('Erro: ' + e.message) }
+                  }}>Mostrar Meteorologia</button>
+                  <button style={{...s.buttonSmall, marginLeft:8}} onClick={async ()=>{
+                    if(!selectedSilo){ alert('Selecione um silo'); return; }
+                    try{
+                      const res = await fetch(`${API_BASE}/api/ml/forecast?siloId=${selectedSilo}&period_days=7`, { headers: getHeaders() });
+                      if(!res.ok) throw new Error('Erro ao buscar previsões');
+                      const data = await res.json();
+                      setForecasts(data || []);
+                    }catch(e){ alert('Erro: ' + e.message) }
+                  }}>Mostrar Previsões (7d)</button>
+                </div>
+              </div>
+              {meteorology.length > 0 && (
+                <div style={{marginTop:12}}>
+                  <h4>Previsão Meteorológica (últimos docs)</h4>
+                  {meteorology.map((m, idx) => (
+                    <div key={idx} style={{padding:8, borderRadius:8, background:'#fff', marginBottom:8}}>
+                      <div style={{fontSize:12, color:'#64748b'}}>Fetcheado em: {new Date(m.fetched_at).toLocaleString()}</div>
+                      <pre style={{whiteSpace:'pre-wrap', fontSize:12}}>{JSON.stringify(m.data.daily || m.data, null, 2)}</pre>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {forecasts.length > 0 && (
+                <div style={{marginTop:12}}>
+                  <h4>Previsões geradas</h4>
+                  <div style={{display:'grid', gap:8}}>
+                    {forecasts.map((f, i) => (
+                      <div key={i} style={{padding:8, borderRadius:8, background:'#fff'}}>
+                        <div><strong>{f.target}</strong> | horizonte: {f.horizon_hours}h | valor: {f.value_predicted}</div>
+                        <div style={{fontSize:12, color:'#64748b'}}>forecast_at: {new Date(f.timestamp_forecast).toLocaleString()}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
