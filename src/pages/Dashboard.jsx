@@ -622,7 +622,7 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
                         return (
                           <div style={{display:'flex', gap:8}}>
                             {times.slice(0,7).map((t,i)=>(
-                              <div key={i} style={{padding:8, background:'#fff', borderRadius:8, border:'1px solid #000000ff', textAlign:'center', minWidth:80}}>
+                              <div key={i} style={{padding:8, background:'#fff', borderRadius:8, border:'1px solid #e6eef6', textAlign:'center', minWidth:80}}>
                                 <div style={{fontSize:12, color:'#64748b'}}>{new Date(t).toLocaleDateString()}</div>
                                 <div style={{fontSize:18, fontWeight:700, color:'#ef4444'}}>{tmax[i] ?? '—'}°</div>
                                 <div style={{fontSize:12, color:'#64748b'}}>min {tmin[i] ?? '—'}°</div>
@@ -638,7 +638,7 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
                 {geoResults && geoResults.length > 0 && (
                   <div style={{marginTop:8}}>
                     {geoResults.map((r, idx)=> (
-                      <div key={idx} style={{padding:8, cursor:'pointer'}} onClick={()=>selectGeo(r)}>{r.name}{r.admin1?`, ${r.admin1}`:''} — {r.country}</div>
+                      <div key={idx} style={{padding:8, cursor:'pointer', color: '#111827',}} onClick={()=>selectGeo(r)}>{r.name}{r.admin1?`, ${r.admin1}`:''} — {r.country}</div>
                     ))}
                   </div>
                 )}
