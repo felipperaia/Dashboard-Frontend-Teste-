@@ -20,7 +20,7 @@ export default function Login({ onLoginSuccess }) {
     }));
   };
 
-  const API_URL = 'https://dashboard-iot-silos-backend-1.onrender.com';
+  const API_URL = 'https://dashboard-backend-teste.onrender.com';
 
   const handleSubmit = async (e) => {
   if (e) e.preventDefault();
@@ -264,4 +264,5 @@ const styles = {
     cursor: "not-allowed",
     opacity: 0.6
   }
+
 };
