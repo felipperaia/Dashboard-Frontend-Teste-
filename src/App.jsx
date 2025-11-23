@@ -9,7 +9,6 @@ import Dashboard from "./pages/Dashboard";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import MFA from "./pages/MFA";
-import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
 
 function AppContent({ pushEnabled, unsubscribeAndLogout }) {
@@ -32,7 +31,6 @@ function AppContent({ pushEnabled, unsubscribeAndLogout }) {
         <Route path="/settings" element={<Settings />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/mfa" element={<MFA />} />
-        <Route path="/profile" element={<Profile />} />
           <Route path="/chat" element={<Chat />} />
       </Routes>
     </>
