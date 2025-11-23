@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 
-const API_URL = "https://dashboard-iot-silos-backend-1.onrender.com/api";
+const API_URL = "https://dashboard-backend-teste.onrender.com/api";
 
 export default function MFA() {
   const [setupData, setSetupData] = useState(null);
@@ -212,4 +212,5 @@ const Input = styled.input`
     border-color: #7c3aed;
   }
 `;
+
 
