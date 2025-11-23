@@ -608,7 +608,7 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
                       <div style={s.weatherBigTemp}>
                         { (weatherData.summary && typeof weatherData.summary.current_temp !== 'undefined') ? `${Math.round(weatherData.summary.current_temp)}°C` : (weatherData.data && weatherData.data.current_weather && weatherData.data.current_weather.temperature ? `${Math.round(weatherData.data.current_weather.temperature)}°C` : '—') }
                       </div>
-                      <div style={{color:'#000000ff'}}>{weatherLocation && weatherLocation.name ? weatherLocation.name : (weatherData.location ? weatherData.location.name : '')}</div>
+                      <div style={{color:'#64748b'}}>{weatherLocation && weatherLocation.name ? weatherLocation.name : (weatherData.location ? weatherData.location.name : '')}</div>
                     </div>
                     <div style={{flex:1}}>
                       {(() => {
@@ -622,7 +622,7 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
                         return (
                           <div style={{display:'flex', gap:8}}>
                             {times.slice(0,7).map((t,i)=>(
-                              <div key={i} style={{padding:8, background:'#fff', borderRadius:8, border:'1px solid #e6eef6', textAlign:'center', minWidth:80}}>
+                              <div key={i} style={{padding:8, background:'#fff', borderRadius:8, border:'1px solid #000000ff', textAlign:'center', minWidth:80}}>
                                 <div style={{fontSize:12, color:'#64748b'}}>{new Date(t).toLocaleDateString()}</div>
                                 <div style={{fontSize:18, fontWeight:700, color:'#ef4444'}}>{tmax[i] ?? '—'}°</div>
                                 <div style={{fontSize:12, color:'#64748b'}}>min {tmin[i] ?? '—'}°</div>
