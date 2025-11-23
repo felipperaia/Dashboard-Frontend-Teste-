@@ -23,6 +23,18 @@ export const Header = ({ pushEnabled }) => {
 
   const [menuOpen, setMenuOpen] = useState(false); // 👈 CONTROLA O MENU HAMBÚRGUER
 
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('current_user');
+      localStorage.removeItem('demeter_chat_history');
+      // trigger storage event for other tabs
+      localStorage.setItem('logout', Date.now().toString());
+    } catch (e) {}
+    window.location.href = '/login';
+  };
+
   useEffect(() => {
     const loadFromStorage = () => {
       try {
@@ -71,17 +83,9 @@ export const Header = ({ pushEnabled }) => {
           <Settings size={18} />
           <span>Configurações</span>
         </Button>
-        <Button onClick={() => {
-            // logout behavior: clear session and chat history
-            try { localStorage.removeItem('access_token'); localStorage.removeItem('refresh_token'); localStorage.removeItem('current_user'); localStorage.removeItem('demeter_chat_history'); } catch(e){}
-            window.location.href = '/login';
-          }} $withGap>
+        <Button onClick={() => handleLogout()} $withGap>
           <UserIcon size={18} />
-          <UserInfo>
-            <UserName>Logout</UserName>
-            <UserRole>{userRole}</UserRole>
-          </UserInfo>
-          <Underline />
+          <span>Logout</span>
         </Button>
       </NavContainer>
 
@@ -103,12 +107,7 @@ export const Header = ({ pushEnabled }) => {
             Configurações
           </MobileButton>
 
-          <MobileButton onClick={() => navigate("/settings")}> 
-            <Settings size={20} />
-            Configurações
-          </MobileButton>
-
-          <MobileButton onClick={() => { try { localStorage.removeItem('access_token'); localStorage.removeItem('refresh_token'); localStorage.removeItem('current_user'); localStorage.removeItem('demeter_chat_history'); } catch(e){} window.location.href='/login'; }}> 
+          <MobileButton onClick={() => { handleLogout(); }}> 
             <UserIcon size={20} />
             Logout
           </MobileButton>

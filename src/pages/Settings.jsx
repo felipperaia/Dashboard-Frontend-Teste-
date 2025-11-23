@@ -95,7 +95,7 @@ export default function Settings() {
             {saving ? "Salvando..." : "Salvar"}
           </PrimaryButton>
 
-          <SecondaryButton onClick={() => navigate("/mfa")}>
+          <SecondaryButton onClick={() => navigate("/mfa") } $mfa>
             Configurar MFA
           </SecondaryButton>
         </ButtonsRow>
@@ -142,14 +142,20 @@ export default function Settings() {
 /* ----------------------------- STYLED COMPONENTS ----------------------------- */
 
 const Panel = styled.div`
-  background: rgb(255, 255, 255);
-  border: 1px solid rgba(129, 110, 255, 0.25);
-  border-radius: 12px;
-  padding: 24px;
-  max-width: 650px;
-  margin: 20px auto;
-  color: #000000;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 10px;
+  padding: 16px;
+  max-width: 720px;
+  margin: 14px auto;
+  color: #06202a;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.08);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(2,6,23,0.12);
+  }
 `;
 
 const Title = styled.h2`
@@ -196,20 +202,21 @@ const ButtonsRow = styled.div`
 const PrimaryButton = styled.button`
   flex: 1;
   padding: 10px;
-  background: #4f46e5;
+  background: #16a34a; /* green primary */
   border: none;
   border-radius: 8px;
   color: white;
   font-size: 15px;
   cursor: pointer;
-  transition: 0.25s;
+  transition: transform 0.12s ease, background 0.12s ease;
 
   &:hover {
-    background: #4338ca;
+    transform: translateY(-2px);
+    background: #15803d;
   }
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: not-allowed;
   }
 `;
@@ -217,15 +224,16 @@ const PrimaryButton = styled.button`
 const SecondaryButton = styled.button`
   flex: 1;
   padding: 10px;
-  background: #16a34a;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #2563eb; /* blue for MFA */
+  border: 1px solid rgba(0,0,0,0.06);
   border-radius: 8px;
   color: white;
   font-size: 15px;
   cursor: pointer;
-  transition: 0.25s;
+  transition: transform 0.12s ease, background 0.12s ease;
 
   &:hover {
-    background: #15803d;
+    transform: translateY(-2px);
+    background: #1e40af;
   }
 `;

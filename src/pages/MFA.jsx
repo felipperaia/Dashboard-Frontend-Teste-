@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useRef } from "react";
 import styled from "styled-components";
+import qrcodeLib from "qrcode";
 
 const API_URL = "https://dashboard-backend-teste.onrender.com/api";
 
@@ -8,6 +9,7 @@ export default function MFA() {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [qrError, setQrError] = useState(false);
+  const canvasRef = useRef(null);
 
   const startSetup = async () => {
     setLoading(true);
@@ -23,6 +25,17 @@ export default function MFA() {
       const data = await res.json();
       setSetupData(data);
       setQrError(false);
+      // try to render QR into canvas for more reliable display
+      try {
+        if (canvasRef.current && (data.otpauth_url || data.uri || data.qr)) {
+          const uri = data.otpauth_url || data.uri || data.qr;
+          await qrcodeLib.toCanvas(canvasRef.current, uri, { errorCorrectionLevel: "H", scale: 6 });
+          setQrError(false);
+        }
+      } catch (qrErr) {
+        console.warn("QR render failed", qrErr);
+        setQrError(true);
+      }
     } catch (e) {
       console.error(e);
       alert("Erro ao iniciar setup MFA");
@@ -87,19 +100,14 @@ export default function MFA() {
               <strong>Secret:</strong> <Code>{setupData.secret}</Code>
             </p>
 
-            {!qrError ? (
-              <QRCode
-                alt="QR code"
-                src={`https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(
-                  setupData.otpauth_url
-                )}`}
-                onError={() => setQrError(true)}
-              />
-            ) : (
+            <div style={{display: 'flex', justifyContent: 'center'}}>
+              <canvas ref={canvasRef} style={{ display: qrError ? 'none' : 'block', maxWidth: 220, borderRadius: 8 }} />
+            </div>
+            {qrError && (
               <div style={{padding:12, background:'#fff', borderRadius:8, textAlign:'center'}}>
-                <p style={{margin:0}}>Não foi possível carregar o QR. Copie a chave abaixo e adicione manualmente no app autenticador.</p>
-                <pre style={{background:'#f3f4f6', padding:8, borderRadius:6, marginTop:8}}>{setupData.otpauth_url}</pre>
-                <button onClick={() => { navigator.clipboard && navigator.clipboard.writeText(setupData.otpauth_url); alert('URL copiada para área de transferência'); }} style={{marginTop:8, padding:'8px 12px', borderRadius:6, border:'none', background:'#4f46e5', color:'#fff'}}>Copiar otpauth_url</button>
+                <p style={{margin:0}}>Não foi possível gerar o QR. Copie a chave abaixo e adicione manualmente no app autenticador.</p>
+                <pre style={{background:'#f3f4f6', padding:8, borderRadius:6, marginTop:8}}>{setupData.otpauth_url || setupData.uri || setupData.qr}</pre>
+                <button onClick={() => { navigator.clipboard && navigator.clipboard.writeText(setupData.otpauth_url || setupData.uri || setupData.qr); alert('URL copiada para área de transferência'); }} style={{marginTop:8, padding:'8px 12px', borderRadius:6, border:'none', background:'#4f46e5', color:'#fff'}}>Copiar otpauth_url</button>
               </div>
             )}
           </SetupBox>
