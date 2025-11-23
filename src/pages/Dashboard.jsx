@@ -622,7 +622,7 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
                         return (
                           <div style={{display:'flex', gap:8}}>
                             {times.slice(0,7).map((t,i)=>(
-                              <div key={i} style={{padding:8, background:'#fff', borderRadius:8, border:'1px solid #e6eef6', textAlign:'center', minWidth:80}}>
+                              <div key={i} style={{padding:8, background:'#000000ff', borderRadius:8, border:'1px solid #e6eef6', textAlign:'center', minWidth:80}}>
                                 <div style={{fontSize:12, color:'#64748b'}}>{new Date(t).toLocaleDateString()}</div>
                                 <div style={{fontSize:18, fontWeight:700, color:'#ef4444'}}>{tmax[i] ?? '—'}°</div>
                                 <div style={{fontSize:12, color:'#64748b'}}>min {tmin[i] ?? '—'}°</div>
