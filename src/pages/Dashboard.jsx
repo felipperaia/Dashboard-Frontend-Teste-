@@ -184,12 +184,16 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
 
   const createReading = async () => {
     try {
+      // determine device_id from selected silo if not provided
+      const deviceIdFromSilo = selectedSilo ? (silos.find(s => s._id === selectedSilo)?.device_id) : undefined;
       const res = await fetch(`${API_BASE}/api/readings/`, {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify({
           ...newReading,
           silo_id: newReading.silo_id || selectedSilo,
+          device_id: newReading.device_id || deviceIdFromSilo || '',
+          timestamp: new Date().toISOString(),
           temp_C: parseFloat(newReading.temp_C),
           rh_pct: parseFloat(newReading.rh_pct),
           co2_ppm_est: newReading.co2_ppm_est ? parseFloat(newReading.co2_ppm_est) : undefined,
