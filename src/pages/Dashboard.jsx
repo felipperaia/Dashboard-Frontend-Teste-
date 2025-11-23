@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import api from "../services/api.js";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -24,6 +25,15 @@ export default function Dashboard() {
   const [reportTitle, setReportTitle] = useState("");
   const [reportNotes, setReportNotes] = useState("");
   const [meteorology, setMeteorology] = useState([]);
+  const [weatherData, setWeatherData] = useState(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState(null);
+  const [weatherLocation, setWeatherLocation] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('weather_location') || 'null'); } catch { return null; }
+  });
+  const [weatherQuery, setWeatherQuery] = useState('');
+  const [geoResults, setGeoResults] = useState([]);
+  const [usingDeviceLocation, setUsingDeviceLocation] = useState(false);
   const [forecasts, setForecasts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -40,6 +50,75 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
     "Authorization": `Bearer ${authToken}`,
     "Content-Type": "application/json"
   });
+
+  // centralized api helper
+  const apiClient = api;
+
+  const saveWeatherLocation = (loc) => {
+    try { localStorage.setItem('weather_location', JSON.stringify(loc)); setWeatherLocation(loc); } catch (e) { console.warn('Não foi possível salvar local', e); }
+  };
+
+  const loadWeatherForLocation = async (lat, lon, name) => {
+    setWeatherLoading(true); setWeatherError(null);
+    try {
+      let data;
+      if (apiClient && apiClient.getWeatherForLocation) {
+        data = await apiClient.getWeatherForLocation(lat, lon);
+      } else {
+        const url = `${API_BASE}/api/weather/for-location?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`;
+        const res = await fetch(url, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Erro ao buscar meteorologia');
+        data = await res.json();
+      }
+      setWeatherData(data);
+      if (name || (data && data.location && data.location.name)) saveWeatherLocation({ lat, lon, name: name || (data.location && data.location.name) });
+    } catch (e) {
+      console.warn('loadWeatherForLocation erro', e);
+      setWeatherError(e.message || 'Erro ao carregar previsão');
+      setWeatherData(null);
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (weatherLocation && weatherLocation.lat && weatherLocation.lon) {
+      loadWeatherForLocation(weatherLocation.lat, weatherLocation.lon, weatherLocation.name);
+    }
+  }, []);
+
+  const useDeviceLocation = () => {
+    if (!navigator.geolocation) { alert('Geolocalização não suportada pelo navegador'); return; }
+    setUsingDeviceLocation(true);
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const lat = pos.coords.latitude; const lon = pos.coords.longitude;
+      await loadWeatherForLocation(lat, lon, 'Local Atual');
+      setUsingDeviceLocation(false);
+    }, (err) => { alert('Permissão negada ou erro: ' + err.message); setUsingDeviceLocation(false); });
+  };
+
+  const searchLocationByName = async (q) => {
+    setWeatherQuery(q);
+    if (!q || q.length < 2) { setGeoResults([]); return; }
+    try {
+      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=pt`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Erro ao buscar locais');
+      const j = await res.json();
+      setGeoResults(j.results || []);
+    } catch (e) {
+      console.warn('geocoding erro', e);
+      setGeoResults([]);
+    }
+  };
+
+  const selectGeo = (r) => {
+    const lat = r.latitude; const lon = r.longitude; const name = r.name + (r.admin1 ? `, ${r.admin1}` : '');
+    saveWeatherLocation({ lat, lon, name });
+    setGeoResults([]);
+    setWeatherQuery('');
+    loadWeatherForLocation(lat, lon, name);
+  };
 
   const fetchSilos = async () => {
     try {
@@ -110,6 +189,7 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
         headers: getHeaders(),
         body: JSON.stringify({
           ...newReading,
+          silo_id: newReading.silo_id || selectedSilo,
           temp_C: parseFloat(newReading.temp_C),
           rh_pct: parseFloat(newReading.rh_pct),
           co2_ppm_est: newReading.co2_ppm_est ? parseFloat(newReading.co2_ppm_est) : undefined,
@@ -477,15 +557,15 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
           <div>
             <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px,1fr))', gap:20}}>
               {[{
-                key: 'temp', title: 'Temperatura', icon: '/src/assets/icons/thermometer.svg', value: readings.length ? (readings[readings.length-1].temp_C ?? 0) : 0, unit: '°C', gradient: 'linear-gradient(90deg, #ef4444, #f97316)'
+                key: 'temp', title: 'Temperatura', icon: '/src/assets/icons/thermometer.png', value: readings.length ? (readings[readings.length-1].temp_C ?? 0) : 0, unit: '°C', gradient: 'linear-gradient(90deg, #ef4444, #f97316)'
               },{
-                key: 'hum', title: 'Umidade', icon: '/src/assets/icons/humidity.svg', value: readings.length ? (readings[readings.length-1].rh_pct ?? 0) : 0, unit: '%', gradient: 'linear-gradient(90deg, #3b82f6, #06b6d4)'
+                key: 'hum', title: 'Umidade', icon: '/src/assets/icons/humidity.png', value: readings.length ? (readings[readings.length-1].rh_pct ?? 0) : 0, unit: '%', gradient: 'linear-gradient(90deg, #3b82f6, #06b6d4)'
               },{
-                key: 'co2', title: 'CO²', icon: '/src/assets/icons/co2.svg', value: readings.length ? (readings[readings.length-1].co2_ppm_est ?? 0) : 0, unit: 'ppm', gradient: 'linear-gradient(90deg, #64748b, #94a3b8)'
+                key: 'co2', title: 'CO²', icon: '/src/assets/icons/co2.png', value: readings.length ? (readings[readings.length-1].co2_ppm_est ?? 0) : 0, unit: 'ppm', gradient: 'linear-gradient(90deg, #64748b, #94a3b8)'
               },{
-                key: 'gas', title: 'Gases inflamáveis', icon: '/src/assets/icons/gas.svg', value: readings.length ? (readings[readings.length-1].mq2_raw ?? 0) : 0, unit: '', gradient: 'linear-gradient(90deg, #f97316, #ef4444)'
+                key: 'gas', title: 'Gases inflamáveis', icon: '/src/assets/icons/gas.png', value: readings.length ? (readings[readings.length-1].mq2_raw ?? 0) : 0, unit: '', gradient: 'linear-gradient(90deg, #f97316, #ef4444)'
               },{
-                key: 'light', title: 'Luminosidade', icon: '/src/assets/icons/light.svg', value: readings.length ? (readings[readings.length-1].lux ?? 0) : 0, unit: 'lux', gradient: 'linear-gradient(90deg, #facc15, #f97316)'
+                key: 'light', title: 'Luminosidade', icon: '/src/assets/icons/light.png', value: readings.length ? (readings[readings.length-1].lux ?? 0) : 0, unit: 'lux', gradient: 'linear-gradient(90deg, #facc15, #f97316)'
               }].map(metric => (
                 <div key={metric.key} style={{...s.card, display:'flex', flexDirection:'column', alignItems:'flex-start', background: '#000', color:'#fff'}}>
                   <div style={{display:'flex', alignItems:'center', gap:12}}>
@@ -507,6 +587,64 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
 
         {activeTab === 'report' && (
           <div>
+            {/* WeatherCard: localização, busca e resumo 7 dias */}
+            <div style={s.card}>
+              <div style={s.cardHeader}>
+                <h3 style={s.cardTitle}>Clima / Localização</h3>
+                <div style={s.weatherControls}>
+                  <input
+                    style={s.searchInput}
+                    placeholder="Buscar cidade ou endereço"
+                    value={weatherQuery}
+                    onChange={(e) => { setWeatherQuery(e.target.value); searchLocationByName(e.target.value); }}
+                  />
+                  <button style={s.buttonSmall} onClick={() => useDeviceLocation()}>{usingDeviceLocation ? 'Detectando...' : 'Usar GPS'}</button>
+                </div>
+              </div>
+              <div>
+                {weatherLoading ? <div>Carregando previsão...</div> : weatherError ? <div style={{color:'#ef4444'}}>Erro: {weatherError}</div> : weatherData ? (
+                  <div style={{display:'flex', gap:16, alignItems:'center'}}>
+                    <div style={s.weatherLeft}>
+                      <div style={s.weatherBigTemp}>
+                        { (weatherData.summary && typeof weatherData.summary.current_temp !== 'undefined') ? `${Math.round(weatherData.summary.current_temp)}°C` : (weatherData.data && weatherData.data.current_weather && weatherData.data.current_weather.temperature ? `${Math.round(weatherData.data.current_weather.temperature)}°C` : '—') }
+                      </div>
+                      <div style={{color:'#64748b'}}>{weatherLocation && weatherLocation.name ? weatherLocation.name : (weatherData.location ? weatherData.location.name : '')}</div>
+                    </div>
+                    <div style={{flex:1}}>
+                      {(() => {
+                        const m = weatherData;
+                        const daily = (m && m.data && m.data.daily) ? m.data.daily : null;
+                        if (!daily) return <div>Nenhuma previsão disponível.</div>;
+                        const times = daily.time || [];
+                        const tmax = daily.temperature_2m_max || [];
+                        const tmin = daily.temperature_2m_min || [];
+                        const precip = daily.precipitation_sum || [];
+                        return (
+                          <div style={{display:'flex', gap:8}}>
+                            {times.slice(0,7).map((t,i)=>(
+                              <div key={i} style={{padding:8, background:'#fff', borderRadius:8, border:'1px solid #e6eef6', textAlign:'center', minWidth:80}}>
+                                <div style={{fontSize:12, color:'#64748b'}}>{new Date(t).toLocaleDateString()}</div>
+                                <div style={{fontSize:18, fontWeight:700, color:'#ef4444'}}>{tmax[i] ?? '—'}°</div>
+                                <div style={{fontSize:12, color:'#64748b'}}>min {tmin[i] ?? '—'}°</div>
+                                <div style={{fontSize:11, color:'#64748b'}}>{precip[i] ? `${precip[i]} mm` : '—'}</div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                ) : (<div>Selecione ou busque um local para ver a previsão.</div>)}
+                {geoResults && geoResults.length > 0 && (
+                  <div style={{marginTop:8}}>
+                    {geoResults.map((r, idx)=> (
+                      <div key={idx} style={{padding:8, cursor:'pointer'}} onClick={()=>selectGeo(r)}>{r.name}{r.admin1?`, ${r.admin1}`:''} — {r.country}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div style={s.card}>
                   <div style={s.cardHeader}>
                     <h3 style={s.cardTitle}>Relatórios Gerados</h3>
@@ -592,9 +730,9 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
                       };
                       const points = vals.map((v, i) => `${pad + i*step},${norm(v)}`).join(' ');
                       return (
-                        <svg width={w} height={h} style={{display:'block'}}>
+                        <png width={w} height={h} style={{display:'block'}}>
                           <polyline points={points} fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                        </png>
                       );
                     };
 
@@ -1186,6 +1324,31 @@ const s = {
     color: "#94a3b8",
     padding: 40,
     fontSize: 14
+  }
+,
+  weatherControls: {
+    display: 'flex',
+    gap: 8,
+    alignItems: 'center'
+  },
+  searchInput: {
+    padding: '8px 12px',
+    border: '1px solid #e2e8f0',
+    borderRadius: 8,
+    fontSize: 14,
+    minWidth: 220
+  },
+  weatherLeft: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 6,
+    minWidth: 140
+  },
+  weatherBigTemp: {
+    fontSize: 40,
+    fontWeight: 800,
+    color: '#ef4444'
   }
 }
 
