@@ -62,7 +62,6 @@ export default function Settings() {
   return (
     <SettingsContainer>
       <HeaderRow>
-        <Title>Configurações </Title>
         <Tabs>
           <TabButton $active={activeTab === 'perfil'} onClick={() => setActiveTab('perfil')}>Perfil</TabButton>
           {profile.role === 'admin' && <TabButton $active={activeTab === 'usuarios'} onClick={() => setActiveTab('usuarios')}>Usuários</TabButton>}
