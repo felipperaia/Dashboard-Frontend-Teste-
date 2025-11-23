@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import api from "./services/api.js";
+import api from "../services/api.js";
 import { Line } from "react-chartjs-2";
 import tempIcon from "../assets/icons/thermometer.png";
 import humidityIcon from "../assets/icons/humidity.png";
