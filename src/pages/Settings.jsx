@@ -9,6 +9,7 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [users, setUsers] = useState([]);
   const [newUser, setNewUser] = useState({ username: '', email: '', password: '', role: 'operator' });
+  const [activeTab, setActiveTab] = useState('perfil');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -60,15 +61,23 @@ export default function Settings() {
 
   return (
     <SettingsContainer>
-      <Grid>
-        <Card>
+      <HeaderRow>
+        <Title>Configurações</Title>
+        <Tabs>
+          <TabButton $active={activeTab === 'perfil'} onClick={() => setActiveTab('perfil')}>Perfil</TabButton>
+          {profile.role === 'admin' && <TabButton $active={activeTab === 'usuarios'} onClick={() => setActiveTab('usuarios')}>Usuários</TabButton>}
+          <TabButton $active={activeTab === 'notificacoes'} onClick={() => setActiveTab('notificacoes')}>Notificações</TabButton>
+        </Tabs>
+      </HeaderRow>
+
+      {activeTab === 'perfil' && (
+        <CardGrande>
           <CardHeader>
-            <Title>Configurações do Usuário</Title>
+            <h3 style={{margin:0, color:'#1e293b'}}>Configurações do Usuário</h3>
             <div>
               <PrimaryButton onClick={save} disabled={saving}>{saving ? 'Salvando...' : 'Salvar'}</PrimaryButton>
             </div>
           </CardHeader>
-
           <CardBody>
             <Section>
               <Label>Nome
@@ -92,61 +101,75 @@ export default function Settings() {
               <SecondaryButton onClick={() => navigate('/mfa')}>Configurar MFA</SecondaryButton>
             </SectionRow>
           </CardBody>
-        </Card>
+        </CardGrande>
+      )}
 
-        {profile.role === 'admin' && (
-          <Card>
-            <CardHeader>
-              <h3 style={{margin:0}}>Gerenciar Usuários</h3>
-            </CardHeader>
-            <CardBody>
-              <Section>
-                <input placeholder="Nome de usuário" value={newUser.username} onChange={e=>setNewUser({...newUser, username:e.target.value})} />
-              </Section>
-              <Section>
-                <input placeholder="Email" value={newUser.email} onChange={e=>setNewUser({...newUser, email:e.target.value})} />
-              </Section>
-              <Section>
-                <input placeholder="Senha" type="password" value={newUser.password} onChange={e=>setNewUser({...newUser, password:e.target.value})} />
-              </Section>
-              <Section>
-                <select value={newUser.role} onChange={e=>setNewUser({...newUser, role:e.target.value})}>
+      {activeTab === 'usuarios' && profile.role === 'admin' && (
+        <CardGrande>
+          <CardHeader>
+            <h3 style={{margin:0, color:'#1e293b'}}>Gerenciar Usuários</h3>
+          </CardHeader>
+          <CardBody>
+            <Section>
+              <Label>Nome de usuário
+                <Input value={newUser.username} onChange={(e)=>setNewUser({...newUser, username:e.target.value})} />
+              </Label>
+            </Section>
+
+            <Section>
+              <Label>Email
+                <Input value={newUser.email} onChange={(e)=>setNewUser({...newUser, email:e.target.value})} />
+              </Label>
+            </Section>
+
+            <Section>
+              <Label>Senha
+                <Input type="password" value={newUser.password} onChange={(e)=>setNewUser({...newUser, password:e.target.value})} />
+              </Label>
+            </Section>
+
+            <Section>
+              <Label>Função
+                <Select value={newUser.role} onChange={(e)=>setNewUser({...newUser, role:e.target.value})}>
                   <option value="operator">Operator</option>
                   <option value="admin">Admin</option>
-                </select>
-              </Section>
-              <Section>
-                <PrimaryButton onClick={createUser}>Criar Usuário</PrimaryButton>
-              </Section>
+                </Select>
+              </Label>
+            </Section>
 
-              <Section style={{marginTop:12}}>
-                <h4>Usuários existentes</h4>
-                <div>
-                  {users.map(u => (
-                    <UserRow key={u.id}>
-                      <div>
-                        <div style={{fontWeight:600}}>{u.username}</div>
-                        <div style={{fontSize:12,color:'#666'}}>{u.email} — {u.role}</div>
-                      </div>
-                    </UserRow>
-                  ))}
-                </div>
-              </Section>
-            </CardBody>
-          </Card>
-        )}
+            <ButtonsRow>
+              <PrimaryButton onClick={createUser}>Criar Usuário</PrimaryButton>
+            </ButtonsRow>
 
-        <Card>
+            <Section style={{marginTop:12}}>
+              <h4 style={{color:'#1e293b'}}>Usuários existentes</h4>
+              <div>
+                {users.map(u => (
+                  <UserRow key={u.id}>
+                    <div>
+                      <div style={{fontWeight:600, color:'#111827'}}>{u.username}</div>
+                      <div style={{fontSize:12,color:'#4b5563'}}>{u.email} — {u.role}</div>
+                    </div>
+                  </UserRow>
+                ))}
+              </div>
+            </Section>
+          </CardBody>
+        </CardGrande>
+      )}
+
+      {activeTab === 'notificacoes' && (
+        <CardGrande>
           <CardHeader>
-            <h3 style={{margin:0}}>Notificações</h3>
+            <h3 style={{margin:0, color:'#1e293b'}}>Notificações</h3>
           </CardHeader>
           <CardBody>
             <Section>
               <Notifications />
             </Section>
           </CardBody>
-        </Card>
-      </Grid>
+        </CardGrande>
+      )}
     </SettingsContainer>
   );
 }
@@ -183,9 +206,9 @@ const Grid = styled.div`
 `;
 
 const Card = styled.div`
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 14px;
+  background: rgba(255,255,255,0.94);
+  border-radius: 16px;
+  padding: 20px;
   box-shadow: 0 6px 18px rgba(2,6,23,0.06);
   border: 1px solid #e6eef6;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
@@ -205,7 +228,7 @@ const CardBody = styled.div`
 `;
 
 const Section = styled.div`
-  padding:8px; border-radius:8px;
+  padding:10px; border-radius:10px;
   transition: transform 0.12s ease, background 0.12s ease;
   &:hover { transform: translateY(-4px); background: #fbfdff; }
 `;
@@ -232,24 +255,24 @@ const Form = styled.div`
 
 const Label = styled.label`
   font-size: 14px;
-  opacity: 0.9;
+  color: #0f172a;
   display: flex;
   flex-direction: column;
   gap: 6px;
 `;
 
 const Input = styled.input`
-  padding: 10px;
-  background: #e2e8f0;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  color: #858282;
+  padding: 12px;
+  background: #f1f5f9;
+  border: 1px solid rgba(148,163,184,0.4);
+  border-radius: 10px;
+  color: #111827;
   font-size: 15px;
 
   &:focus {
     outline: none;
-    border-color: #a78bfa;
-    background: rgba(255, 255, 255, 0.12);
+    border-color: #4f46e5;
+    background: rgba(255, 255, 255, 0.98);
   }
 `;
 
@@ -257,6 +280,36 @@ const ButtonsRow = styled.div`
   display: flex;
   gap: 12px;
   margin-top: 10px;
+`;
+
+const HeaderRow = styled.div`
+  display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:20px;
+`;
+
+const Tabs = styled.div`
+  display:flex; gap:8px; border-bottom:2px solid #e2e8f0; padding-bottom:2px; justify-content:flex-end;
+`;
+
+const TabButton = styled.button`
+  padding:10px 16px; border:none; border-radius:8px 8px 0 0; cursor:pointer; font-size:14px; font-weight:500;
+  transition: all 0.16s ease;
+  background: ${({$active}) => $active ? 'linear-gradient(135deg,#258f3f,#269c4a)' : 'transparent'};
+  color: ${({$active}) => $active ? '#fff' : '#64748b'};
+  box-shadow: ${({$active}) => $active ? '0 2px 8px rgba(59,130,246,0.18)' : 'none'};
+  &:hover { transform: translateY(-2px); color: #0f172a; background: ${({$active}) => $active ? 'linear-gradient(135deg,#1e7b36,#1f8b3f)' : '#f9fafb'} }
+`;
+
+const CardGrande = styled.div`
+  background: rgba(255,255,255,0.96);
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 8px rgba(2,6,23,0.06);
+  border: 1px solid #e6eef6;
+`;
+
+const Select = styled.select`
+  padding: 10px; background: #f1f5f9; border-radius: 8px; border: 1px solid rgba(148,163,184,0.4); color: #111827;
 `;
 
 const PrimaryButton = styled.button`
