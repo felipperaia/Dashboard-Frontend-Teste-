@@ -195,6 +195,23 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
     fetchUsers();
   }, []);
 
+  // Auto-load meteorology when entering the Report tab or when silo changes
+  useEffect(() => {
+    if (activeTab === 'report' && selectedSilo) {
+      (async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/weather/latest?silo_id=${selectedSilo}`, { headers: getHeaders() });
+          if (res.ok) {
+            const data = await res.json();
+            setMeteorology(data || []);
+          }
+        } catch (e) {
+          console.warn('Erro ao carregar meteorologia automaticamente', e);
+        }
+      })();
+    }
+  }, [activeTab, selectedSilo]);
+
   // usuário atual (para regras de exibição por role)
   const currentUser = (() => {
     try { return JSON.parse(localStorage.getItem('current_user') || '{}'); } catch { return {}; }
@@ -527,13 +544,58 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
               </div>
               {meteorology.length > 0 && (
                 <div style={{marginTop:12}}>
-                  <h4>Previsão Meteorológica (últimos docs)</h4>
-                  {meteorology.map((m, idx) => (
-                    <div key={idx} style={{padding:8, borderRadius:8, background:'#fff', marginBottom:8}}>
-                      <div style={{fontSize:12, color:'#64748b'}}>Fetcheado em: {new Date(m.fetched_at).toLocaleString()}</div>
-                      <pre style={{whiteSpace:'pre-wrap', fontSize:12}}>{JSON.stringify(m.data.daily || m.data, null, 2)}</pre>
-                    </div>
-                  ))}
+                  <h4>Previsão Meteorológica (7 dias)</h4>
+                  {(() => {
+                    const m = meteorology[0];
+                    const daily = (m && m.data && m.data.daily) ? m.data.daily : null;
+                    if (!daily) return <div>Nenhuma previsão disponível.</div>;
+                    const times = daily.time || [];
+                    const tmax = daily.temperature_2m_max || [];
+                    const tmin = daily.temperature_2m_min || [];
+                    const precip = daily.precipitation_sum || [];
+
+                    const allTemps = [...tmax, ...tmin].filter(v => typeof v === 'number');
+                    const minTemp = allTemps.length ? Math.min(...allTemps) : 0;
+                    const maxTemp = allTemps.length ? Math.max(...allTemps) : 1;
+
+                    const renderSpark = (vals) => {
+                      if (!vals || !vals.length) return null;
+                      const w = 120, h = 36, pad = 4;
+                      const step = (w - pad*2) / Math.max(1, vals.length - 1);
+                      const norm = (v) => {
+                        if (maxTemp === minTemp) return h/2;
+                        return h - pad - ((v - minTemp) / (maxTemp - minTemp)) * (h - pad*2);
+                      };
+                      const points = vals.map((v, i) => `${pad + i*step},${norm(v)}`).join(' ');
+                      return (
+                        <svg width={w} height={h} style={{display:'block'}}>
+                          <polyline points={points} fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      );
+                    };
+
+                    return (
+                      <div style={{display:'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap:12}}>
+                        {times.slice(0,7).map((t, i) => (
+                          <div key={i} style={{padding:12, background:'#fff', borderRadius:8, border:'1px solid #e6eef6'}}>
+                            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
+                              <div style={{fontSize:13, fontWeight:600}}>{new Date(t).toLocaleDateString()}</div>
+                              <div style={{fontSize:12, color:'#64748b'}}>{precip[i] ? `${precip[i]} mm` : '—'}</div>
+                            </div>
+                            <div style={{display:'flex', gap:8, alignItems:'center'}}>
+                              <div style={{flex:1}}>
+                                <div style={{fontSize:20, fontWeight:700, color:'#ef4444'}}>{tmax[i] ?? '—'}°</div>
+                                <div style={{fontSize:12, color:'#64748b'}}>mín {tmin[i] ?? '—'}°</div>
+                              </div>
+                              <div style={{width:120}}>
+                                {renderSpark(tmax.slice(0,7))}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
               {forecasts.length > 0 && (
