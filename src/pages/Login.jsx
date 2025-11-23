@@ -115,7 +115,7 @@ export default function Login({ onLoginSuccess }) {
   return (
     <div style={{...styles.container, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "70vh", marginTop: "4rem" }}>
       <h1 style={{...styles.title, marginBottom: "1rem" }}>Deméter - Monitoring Dashboard</h1>
-      <img src={logo} alt="Deméter Logo" style={{width:120, height:40, marginBottom:24}} />
+      <img src={logo} alt="Deméter Logo"/>
         <div style={styles.loginBox}>
           <h2 style={{...styles.title, marginBottom:8}}>Acesse sua conta</h2>
 
@@ -161,23 +161,23 @@ export default function Login({ onLoginSuccess }) {
               {error}
             </div>
           )}
-
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={loading}
-            style={{
-              ...styles.button,
-              ...(loading ? styles.buttonDisabled : {}),
-              padding: "10px 14px",
-              fontSize: "14px",
-              width: "100%",
-              maxWidth: "320px",
-              marginTop: 12
-            }}
-          >
-            {loading ? "Entrando..." : "Entrar"}
-          </button>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={loading}
+          style={{
+            ...styles.button,
+            ...(loading ? styles.buttonDisabled : {}),
+            padding: "10px 14px",
+            fontSize: "14px",
+            width: "50%",
+            maxWidth: "160px",
+            margin: "12px auto 0",
+            display: "block" 
+          }}
+        >
+          {loading ? "Entrando..." : "Entrar"}
+        </button>
         </div>
       </div>
     </div>
