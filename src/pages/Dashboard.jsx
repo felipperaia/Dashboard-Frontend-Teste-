@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import api from "../services/api.js";
 import { Line } from "react-chartjs-2";
+import tempIcon from '../assets/icons/temperature.png';
+import humidityIcon from '../assets/icons/humidity.png';
+import co2Icon from '../assets/icons/co2.png';
+import gasIcon from '../assets/icons/gas.png';
+import lightIcon from '../assets/icons/light.png';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -558,36 +563,132 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
         )}
 
         {activeTab === "simplified" && (
-          <div>
-            <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px,1fr))', gap:20}}>
-              {[{
-                key: 'temp', title: 'Temperatura', icon: '/src/assets/icons/thermometer.png', value: readings.length ? (readings[readings.length-1].temp_C ?? 0) : 0, unit: '°C', gradient: 'linear-gradient(90deg, #ef4444, #f97316)'
-              },{
-                key: 'hum', title: 'Umidade', icon: '/src/assets/icons/humidity.png', value: readings.length ? (readings[readings.length-1].rh_pct ?? 0) : 0, unit: '%', gradient: 'linear-gradient(90deg, #3b82f6, #06b6d4)'
-              },{
-                key: 'co2', title: 'CO²', icon: '/src/assets/icons/co2.png', value: readings.length ? (readings[readings.length-1].co2_ppm_est ?? 0) : 0, unit: 'ppm', gradient: 'linear-gradient(90deg, #64748b, #94a3b8)'
-              },{
-                key: 'gas', title: 'Gases inflamáveis', icon: '/src/assets/icons/gas.png', value: readings.length ? (readings[readings.length-1].mq2_raw ?? 0) : 0, unit: '', gradient: 'linear-gradient(90deg, #f97316, #ef4444)'
-              },{
-                key: 'light', title: 'Luminosidade', icon: '/src/assets/icons/light.png', value: readings.length ? (readings[readings.length-1].lux ?? 0) : 0, unit: 'lux', gradient: 'linear-gradient(90deg, #facc15, #f97316)'
-              }].map(metric => (
-                <div key={metric.key} style={{...s.card, display:'flex', flexDirection:'column', alignItems:'flex-start', background: '#000', color:'#fff'}}>
-                  <div style={{display:'flex', alignItems:'center', gap:12}}>
-                    <img src={metric.icon} alt={metric.title} style={{width:28,height:28, filter:'invert(1)'}} />
-                    <h4 style={{margin:0, color:'#fff'}}>{metric.title}</h4>
-                  </div>
-                  <div style={{marginTop:12, display:'flex', alignItems:'baseline', gap:8}}>
-                    <span style={{fontSize:28, fontWeight:700, color:'#fff'}}>{metric.value}</span>
-                    <span style={{color:'#cbd5e1'}}>{metric.unit}</span>
-                  </div>
-                  <div style={{width:'100%', height:8, marginTop:12, background:'#f1f5f9', borderRadius:6}}>
-                    <div style={{height:'100%', width:`${Math.min(100, (metric.unit==='°C' ? Math.abs(metric.value) : (metric.unit==='%' ? metric.value : (metric.unit==='lux' ? Math.min(100, metric.value) : 50))))}%`, background: metric.gradient, borderRadius:6}} />
-                  </div>
-                </div>
-              ))}
-            </div>
+  <div>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(180px,1fr))",
+        gap: 20,
+      }}
+    >
+      {[
+        {
+          key: "temp",
+          title: "Temperatura",
+          icon: tempIcon, // import
+          value: readings.length
+            ? readings[readings.length - 1].temp_C ?? 0
+            : 0,
+          unit: "°C",
+          gradient: "linear-gradient(90deg, #ef4444, #f97316)",
+        },
+        {
+          key: "hum",
+          title: "Umidade",
+          icon: humidityIcon, // import
+          value: readings.length
+            ? readings[readings.length - 1].rh_pct ?? 0
+            : 0,
+          unit: "%",
+          gradient: "linear-gradient(90deg, #3b82f6, #06b6d4)",
+        },
+        {
+          key: "co2",
+          title: "CO²",
+          icon: co2Icon, // import
+          value: readings.length
+            ? readings[readings.length - 1].co2_ppm_est ?? 0
+            : 0,
+          unit: "ppm",
+          gradient: "linear-gradient(90deg, #64748b, #94a3b8)",
+        },
+        {
+          key: "gas",
+          title: "Gases inflamáveis",
+          icon: gasIcon, // import
+          value: readings.length
+            ? readings[readings.length - 1].mq2_raw ?? 0
+            : 0,
+          unit: "",
+          gradient: "linear-gradient(90deg, #f97316, #ef4444)",
+        },
+        {
+          key: "light",
+          title: "Luminosidade",
+          icon: lightIcon, // import
+          value: readings.length
+            ? readings[readings.length - 1].lux ?? 0
+            : 0,
+          unit: "lux",
+          gradient: "linear-gradient(90deg, #facc15, #f97316)",
+        },
+      ].map((metric) => (
+        <div
+          key={metric.key}
+          style={{
+            ...s.card,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            background: "#000",
+            color: "#fff",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <img
+              src={metric.icon}
+              alt={metric.title}
+              style={{ width: 28, height: 28, filter: "invert(1)" }}
+            />
+            <h4 style={{ margin: 0, color: "#fff" }}>{metric.title}</h4>
           </div>
-        )}
+          <div
+            style={{
+              marginTop: 12,
+              display: "flex",
+              alignItems: "baseline",
+              gap: 8,
+            }}
+          >
+            <span
+              style={{ fontSize: 28, fontWeight: 700, color: "#fff" }}
+            >
+              {metric.value}
+            </span>
+            <span style={{ color: "#cbd5e1" }}>{metric.unit}</span>
+          </div>
+          <div
+            style={{
+              width: "100%",
+              height: 8,
+              marginTop: 12,
+              background: "#f1f5f9",
+              borderRadius: 6,
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                width: `${Math.min(
+                  100,
+                  metric.unit === "°C"
+                    ? Math.abs(metric.value)
+                    : metric.unit === "%"
+                    ? metric.value
+                    : metric.unit === "lux"
+                    ? Math.min(100, metric.value)
+                    : 50
+                )}%`,
+                background: metric.gradient,
+                borderRadius: 6,
+              }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
         {activeTab === 'report' && (
           <div>
