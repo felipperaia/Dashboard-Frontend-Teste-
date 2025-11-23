@@ -98,6 +98,11 @@ const api = {
   },
   
   getAlerts: () => request("/alerts"),
+
+  // Weather helpers
+  getWeatherForLocation: (lat, lon) => request(`/weather/for-location?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`),
+  getWeatherLatest: (lat, lon) => request(`/weather/latest?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`),
+  fetchWeatherWeekly: (lat, lon, siloId) => request(`/weather/fetch-weekly`, { method: 'POST', body: JSON.stringify({ lat, lon, silo_id: siloId }) }),
   
   sendSubscription: (sub) => 
     request("/notifications/subscribe", { 
