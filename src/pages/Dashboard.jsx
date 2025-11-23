@@ -28,7 +28,7 @@ export default function Dashboard() {
   
 const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_token"));
 
-  const API_BASE = "https://dashboard-iot-silos-backend-1.onrender.com";
+  const API_BASE = "https://dashboard-backend-teste.onrender.com";
   const getHeaders = () => ({
     "Authorization": `Bearer ${authToken}`,
     "Content-Type": "application/json"
@@ -1038,4 +1038,5 @@ const Tabs = styled.div`
       padding: 8px 12px!important;
     }
   }
+
 `;
