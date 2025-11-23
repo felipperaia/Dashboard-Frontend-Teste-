@@ -5,7 +5,7 @@ import axios from "axios";
 import styled from "styled-components";
 
 // 👉 Configuração base da API
-const API_BASE = "https://dashboard-iot-silos-backend-1.onrender.com";
+const API_BASE = "https://dashboard-backend-teste.onrender.com";
 const getAuthToken = () => localStorage.getItem("access_token");
 
 const getHeaders = () => ({
@@ -251,3 +251,4 @@ const Underline = styled.div`
   margin-top: 6px;
   border-radius: 2px;
 `;
+
