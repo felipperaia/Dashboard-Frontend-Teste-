@@ -19,6 +19,54 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
+import styled from "styled-components";
+
+const Container = styled.div`
+  display: flex;
+  min-height: 100vh;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
+
+const MainContent = styled.div` 
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+    width: 70vw;
+    
+     @media (max-width: 768px) {
+    flex: 1;
+    margin: auto;
+    overflow-y: auto;
+    width: 80vw;
+    
+  }
+`
+
+const Tabs = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-bottom: 25px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 2px;
+  justify-content: end;
+
+  @media (max-width: 768px) {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 25px;
+    border-bottom: 2px solid rgb(226, 232, 240);
+    padding-bottom: 2px;
+    justify-content: center;
+
+    button {
+      padding: 8px 12px!important;
+    }
+  }
+`;
+
 export default function Dashboard() {
   const [silos, setSilos] = useState([]);
   const [readings, setReadings] = useState([]);
@@ -835,9 +883,9 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
                       };
                       const points = vals.map((v, i) => `${pad + i*step},${norm(v)}`).join(' ');
                       return (
-                        <png width={w} height={h} style={{display:'block'}}>
+                        <svg width={w} height={h} style={{display:'block'}}>
                           <polyline points={points} fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </png>
+                        </svg>
                       );
                     };
 
@@ -1457,50 +1505,3 @@ const s = {
   }
 }
 
-import styled from "styled-components";
-
-const Container = styled.div`
-  display: flex;
-  min-height: 100vh;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-  }
-`;
-
-const MainContent = styled.div` 
-    flex: 1;
-    padding: 30;
-    overflow-Y: "auto";
-    width: 70vw;
-    
-     @media (max-width: 768px) {
-    flex: 1;
-    margin: auto;
-    overflow-Y: "auto";
-    width: 80vw;
-    
-  }
-`
-
-const Tabs = styled.div`
-  display: flex;
-  gap: 8px;
-  margin-bottom: 25px;
-  border-bottom: 2px solid #e2e8f0;
-  padding-bottom: 2px;
-  justify-content: end;
-
-  @media (max-width: 768px) {
-    display: flex;
-    gap: 3px;
-    margin-bottom: 25px;
-    border-bottom: 2px solid rgb(226, 232, 240);
-    padding-bottom: 2px;
-    justify-content: center;
-
-    button {
-      padding: 8px 12px!important;
-    }
-  }
-`;
