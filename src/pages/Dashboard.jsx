@@ -927,6 +927,404 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
                 </div>
               )}
             </div>
+             <div style={s.card}>
+              <div style={s.cardHeader}>
+                <h3 style={s.cardTitle}>Análise de Previsões e Métricas</h3>
+                <div>
+                  <select
+                    style={s.select}
+                    value={selectedSiloAnalysis || ""}
+                    onChange={(e) => {
+                      setSelectedSiloAnalysis(e.target.value);
+                      if (e.target.value)
+                        loadForecastsAndMetrics(e.target.value);
+                    }}
+                  >
+                    <option value="">Selecione Silo para análise</option>
+                    {silos.map((s) => (
+                      <option key={s._id} value={s._id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {!selectedSiloAnalysis ? (
+                <div
+                  style={{
+                    padding: 20,
+                    textAlign: "center",
+                    color: "#64748b"
+                  }}
+                >
+                  Selecione um silo acima para ver análise de previsões e
+                  métricas.
+                </div>
+              ) : analysisLoading ? (
+                <div
+                  style={{
+                    padding: 20,
+                    textAlign: "center"
+                  }}
+                >
+                  Carregando análise...
+                </div>
+              ) : analysisError ? (
+                <div style={{ padding: 20, color: "#ef4444" }}>
+                  Erro: {analysisError}
+                </div>
+              ) : (
+                <div>
+                  <div style={{ marginBottom: 20 }}>
+                    <h4
+                      style={{
+                        marginTop: 0,
+                        marginBottom: 12,
+                        color: "#1f2937",
+                        fontSize: 14,
+                        fontWeight: 600
+                      }}
+                    >
+                      Resumo de Métricas (últimos 30 dias)
+                    </h4>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 12
+                      }}
+                    >
+                      <div
+                        style={{
+                          padding: 12,
+                          background: "#fef3c7",
+                          borderRadius: 8,
+                          border: "1px solid #fde68a"
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: "#92400e"
+                          }}
+                        >
+                          Temperatura
+                        </div>
+                        <div style={{ marginTop: 8, fontSize: 11 }}>
+                          Média:{" "}
+                          <strong>
+                            {analysisMetrics?.temperature?.avg?.toFixed(1) ||
+                              "—"}
+                            °C
+                          </strong>
+                        </div>
+                        <div style={{ fontSize: 11 }}>
+                          Mediana:{" "}
+                          <strong>
+                            {analysisMetrics?.temperature?.p50?.toFixed(1) ||
+                              "—"}
+                            °C
+                          </strong>
+                        </div>
+                        <div style={{ fontSize: 11 }}>
+                          Min/Máx:{" "}
+                          <strong>
+                            {analysisMetrics?.temperature?.min?.toFixed(1) ||
+                              "—"}
+                            °C{" "}
+                            /{" "}
+                            {analysisMetrics?.temperature?.max?.toFixed(1) ||
+                              "—"}
+                            °C
+                          </strong>
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          padding: 12,
+                          background: "#dbeafe",
+                          borderRadius: 8,
+                          border: "1px solid #bfdbfe"
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: "#0c4a6e"
+                          }}
+                        >
+                          Umidade
+                        </div>
+                        <div style={{ marginTop: 8, fontSize: 11 }}>
+                          Média:{" "}
+                          <strong>
+                            {analysisMetrics?.humidity?.avg?.toFixed(1) || "—"}
+                            %
+                          </strong>
+                        </div>
+                        <div style={{ fontSize: 11 }}>
+                          Mediana:{" "}
+                          <strong>
+                            {analysisMetrics?.humidity?.p50?.toFixed(1) ||
+                              "—"}
+                            %
+                          </strong>
+                        </div>
+                        <div style={{ fontSize: 11 }}>
+                          Min/Máx:{" "}
+                          <strong>
+                            {analysisMetrics?.humidity?.min?.toFixed(1) ||
+                              "—"}
+                            %{" "}
+                            /{" "}
+                            {analysisMetrics?.humidity?.max?.toFixed(1) ||
+                              "—"}
+                            %
+                          </strong>
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          padding: 12,
+                          background: "#fee2e2",
+                          borderRadius: 8,
+                          border: "1px solid #fecaca"
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: "#7c2d12"
+                          }}
+                        >
+                          Gases
+                        </div>
+                        <div style={{ marginTop: 8, fontSize: 11 }}>
+                          Média:{" "}
+                          <strong>
+                            {analysisMetrics?.gas?.avg?.toFixed(1) || "—"} ppm
+                          </strong>
+                        </div>
+                        <div style={{ fontSize: 11 }}>
+                          Mediana:{" "}
+                          <strong>
+                            {analysisMetrics?.gas?.p50?.toFixed(1) || "—"} ppm
+                          </strong>
+                        </div>
+                        <div style={{ fontSize: 11 }}>
+                          Máxima:{" "}
+                          <strong>
+                            {analysisMetrics?.gas?.max?.toFixed(1) || "—"} ppm
+                          </strong>
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          padding: 12,
+                          background: "#f0fdf4",
+                          borderRadius: 8,
+                          border: "1px solid #dcfce7"
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: "#15803d"
+                          }}
+                        >
+                          Leituras
+                        </div>
+                        <div style={{ marginTop: 8, fontSize: 11 }}>
+                          Temperatura:{" "}
+                          <strong>
+                            {analysisMetrics?.temperature?.count || 0}
+                          </strong>
+                        </div>
+                        <div style={{ fontSize: 11 }}>
+                          Umidade:{" "}
+                          <strong>
+                            {analysisMetrics?.humidity?.count || 0}
+                          </strong>
+                        </div>
+                        <div style={{ fontSize: 11 }}>
+                          Gases:{" "}
+                          <strong>
+                            {analysisMetrics?.gas?.count || 0}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: 20 }}>
+                    <h4
+                      style={{
+                        marginTop: 0,
+                        marginBottom: 12,
+                        color: "#1f2937",
+                        fontSize: 14,
+                        fontWeight: 600
+                      }}
+                    >
+                      Previsões (próximos 7 dias)
+                    </h4>
+                    {analysisForecastByTarget &&
+                    Object.keys(analysisForecastByTarget).length > 0 ? (
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fit, minmax(200px, 1fr))",
+                          gap: 12
+                        }}
+                      >
+                        {Object.entries(analysisForecastByTarget).map(
+                          ([target, arr]) => {
+                            const values = arr
+                              .map((f) => f.value_predicted)
+                              .filter(
+                                (v) => v !== null && v !== undefined
+                              );
+                            const avg =
+                              values.length > 0
+                                ? values.reduce((a, b) => a + b, 0) /
+                                  values.length
+                                : null;
+                            const sorted = [...values].sort(
+                              (a, b) => a - b
+                            );
+                            const median =
+                              sorted.length > 0
+                                ? sorted[Math.floor(sorted.length / 2)]
+                                : null;
+                            const min =
+                              values.length > 0
+                                ? Math.min(...values)
+                                : null;
+                            const max =
+                              values.length > 0
+                                ? Math.max(...values)
+                                : null;
+
+                            return (
+                              <div
+                                key={target}
+                                style={{
+                                  padding: 12,
+                                  background: "#f8fafc",
+                                  borderRadius: 8,
+                                  border: "1px solid #e2e8f0"
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    fontSize: 12,
+                                    fontWeight: 700,
+                                    color: "#0f172a",
+                                    marginBottom: 8
+                                  }}
+                                >
+                                  {target.toUpperCase()}
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: 11,
+                                    color: "#475569",
+                                    lineHeight: 1.6
+                                  }}
+                                >
+                                  <div>
+                                    Média prevista:{" "}
+                                    <strong>
+                                      {avg != null
+                                        ? avg.toFixed(2)
+                                        : "—"}
+                                    </strong>
+                                  </div>
+                                  <div>
+                                    Mediana:{" "}
+                                    <strong>
+                                      {median != null
+                                        ? median.toFixed(2)
+                                        : "—"}
+                                    </strong>
+                                  </div>
+                                  <div>
+                                    Intervalo:{" "}
+                                    <strong>
+                                      {min != null
+                                        ? min.toFixed(2)
+                                        : "—"}{" "}
+                                      a{" "}
+                                      {max != null
+                                        ? max.toFixed(2)
+                                        : "—"}
+                                    </strong>
+                                  </div>
+                                  <div>
+                                    Previsões:{" "}
+                                    <strong>{arr.length}</strong>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+                        )}
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          padding: 12,
+                          background: "#f1f5f9",
+                          borderRadius: 8,
+                          color: "#64748b"
+                        }}
+                      >
+                        Nenhuma previsão disponível ainda para este silo.
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <h4
+                      style={{
+                        marginTop: 0,
+                        marginBottom: 12,
+                        color: "#1f2937",
+                        fontSize: 14,
+                        fontWeight: 600
+                      }}
+                    >
+                      Análise textual e recomendações
+                    </h4>
+                    <div
+                      style={{
+                        padding: 16,
+                        background: "#f0f9ff",
+                        borderRadius: 8,
+                        border: "1px solid #bfdbfe",
+                        fontSize: 12,
+                        color: "#1e3a8a",
+                        lineHeight: 1.7,
+                        whiteSpace: "pre-wrap",
+                        fontFamily: '"Monaco", "Courier New", monospace'
+                      }}
+                    >
+                      {analysisExplanation ||
+                        "Sem análise disponível para este período."}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
