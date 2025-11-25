@@ -95,7 +95,13 @@ export default function Dashboard() {
   const [newSilo, setNewSilo] = useState({ name: "", device_id: "", latitude: "", longitude: "", capacity: "" });
   const [newUser, setNewUser] = useState({ username: "", email: "", password: "" });
   const [newReading, setNewReading] = useState({ silo_id: "", temp_C: "", rh_pct: "", co2_ppm_est: "", mq2_raw: "", luminosity_alert: 0, lux: "" });
-  
+    const [selectedSiloAnalysis, setSelectedSiloAnalysis] = useState("");
+  const [analysisMetrics, setAnalysisMetrics] = useState(null);
+  const [analysisForecastByTarget, setAnalysisForecastByTarget] = useState({});
+  const [analysisExplanation, setAnalysisExplanation] = useState("");
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisError, setAnalysisError] = useState(null);
+
 const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_token"));
 
   const API_BASE = "https://dashboard-backend-teste.onrender.com";
