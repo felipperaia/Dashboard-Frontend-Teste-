@@ -101,6 +101,7 @@ export default function Dashboard() {
   const [analysisExplanation, setAnalysisExplanation] = useState("");
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [analysisError, setAnalysisError] = useState(null);
+  const [analysisPeriodDays, setAnalysisPeriodDays] = useState(30);
 
 const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_token"));
 
@@ -177,6 +178,56 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
     setGeoResults([]);
     setWeatherQuery('');
     loadWeatherForLocation(lat, lon, name);
+  };
+
+  // Open report PDF via fetch so Authorization header is sent
+  const openReportPdf = async (id) => {
+    if (!id) return;
+    const url = `${API_BASE}/api/reports/${id}/pdf`;
+    const res = await fetch(url, { headers: getHeaders() });
+    if (!res.ok) {
+      let txt = null;
+      try { txt = await res.text(); } catch (e) {}
+      throw new Error(txt || 'Erro ao baixar PDF');
+    }
+    const blob = await res.blob();
+    const fileUrl = window.URL.createObjectURL(blob);
+    window.open(fileUrl, '_blank');
+  };
+
+  // Load forecasts and metrics for analysis card
+  const loadForecastsAndMetrics = async (siloId, periodDays = 30) => {
+    if (!siloId) return;
+    try {
+      setAnalysisLoading(true);
+      setAnalysisError(null);
+
+      const metricsRes = await fetch(`${API_BASE}/api/ml/analysis?siloId=${encodeURIComponent(siloId)}&period_days=${encodeURIComponent(periodDays)}`, { headers: getHeaders() });
+      if (!metricsRes.ok) throw new Error('Erro ao buscar métricas de análise');
+      const metricsData = await metricsRes.json();
+
+      const { metrics, forecasts, explanation } = metricsData;
+
+      const grouped = {};
+      if (Array.isArray(forecasts)) {
+        for (const f of forecasts) {
+          const key = f.target || 'desconhecido';
+          if (!grouped[key]) grouped[key] = [];
+          grouped[key].push(f);
+        }
+      }
+
+      setAnalysisMetrics(metrics || null);
+      setAnalysisForecastByTarget(grouped);
+      setAnalysisExplanation(explanation || 'Sem análise disponível para este período.');
+    } catch (e) {
+      setAnalysisError(e.message || 'Falha ao carregar análise');
+      setAnalysisMetrics(null);
+      setAnalysisForecastByTarget({});
+      setAnalysisExplanation('Sem análise disponível para este período.');
+    } finally {
+      setAnalysisLoading(false);
+    }
   };
 
   const fetchSilos = async () => {
@@ -825,7 +876,7 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
                               )}
                             </div>
                             <div style={{display:'flex', gap:8}}>
-                              <a href={`${API_BASE}/api/reports/${r._id}/pdf`} target="_blank" rel="noreferrer" style={{textDecoration:'none'}}><button style={s.buttonSmall}>Baixar PDF</button></a>
+                              <button style={s.buttonSmall} onClick={() => openReportPdf(r._id)}>Baixar PDF</button>
                             </div>
                           </div>
                         ))}
@@ -856,8 +907,12 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
                         const res = await fetch(`${API_BASE}/api/reports/`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(body) });
                         if(!res.ok) throw new Error('Erro ao gerar relatório');
                         const created = await res.json();
-                        // abrir PDF
-                        window.open(`${API_BASE}/api/reports/${created._id}/pdf`, '_blank');
+                        // abrir PDF via fetch com headers
+                        try {
+                          await openReportPdf(created._id);
+                        } catch (err) {
+                          alert('Erro ao gerar/abrir PDF: ' + (err.message || err));
+                        }
                       }catch(e){ alert('Erro ao gerar relatório: ' + e.message) }
                     }}>Gerar Relatório (PDF)</button>
                     <div style={{flex:1}} />
@@ -992,7 +1047,7 @@ const [authToken, setAuthToken] = useState(() => localStorage.getItem("access_to
                         fontWeight: 600
                       }}
                     >
-                      Resumo de Métricas (últimos 30 dias)
+                      Resumo de Métricas (últimos {analysisPeriodDays} dias)
                     </h4>
                     <div
                       style={{
